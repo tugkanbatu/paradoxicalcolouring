@@ -1,0 +1,8 @@
+The value of r: 0.9916
+Proof of Lemma 5.The maximum difference |q_k - q_l| for j_k=j_l+1: 0.22955
+The maximum q_k for j_k>j_l: 0.32546
+The minimum value of p+q_3+q_4 for j_2>j_1>1: 0.23163
+
+Proof of Lemma 7.
+
+The expectation of the ratios: 0.0010956

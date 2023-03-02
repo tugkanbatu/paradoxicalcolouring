@@ -1,3 +1,6 @@
+// Compile command:
+// g++ genanalysis_threaded.cpp -o genericanalysis -pthread -std=c++11
+
 #include<iostream>
 #include<fstream>
 #include<cmath>
@@ -24,8 +27,7 @@ long double r;
 long double maxdiff1[types+1][types+1][types+1][types+1];
 long double maxjumpval[types+1][types+1][types+1][types+1];
 long double mintail[types+1][types+1][types+1][types+1];
-
-
+long double mingen[types+1][types+1][types+1][types+1];
 
 #include "Func1.cpp"
 #include "helpers1.cpp"
@@ -40,15 +42,13 @@ void generic_thread(int j1, int j2, int j3, int j4){
   Fns[3] = new Func_iter(j4,vcur);
 
   long double mxd=0.0L, mxj=0.0, mnt=1.0L;
-  
-  //  cout << "m : w(m/M)\t r(m/M," <<j1<<","<<j2 <<","<<j3 <<","<<j4<<")" << endl;
+  mingen[j1][j2][j3][j4]=ub;
+    
   for(int m=1;m<=maxC;m++){
     long double budget = 1.0 - (m/M);
 
     SimulSolver(Fns,NoFns,roots,budget,lb,ub,accuracy);
 
-    //    cout << m << ":   q_i values: " << roots[0] << ", " << roots[1] << ", " << roots[2] << ", " << roots[3] << endl;
-       
     if (j1==j2-1)
       mxd = max(mxd,abs(roots[1]-roots[0]));
     if (j2==j3-1)
@@ -69,18 +69,19 @@ void generic_thread(int j1, int j2, int j3, int j4){
       mxj = max(mxj,roots[3]);
     if (j1>1 && j2>j1)
       mnt = min(mnt, (m/M) + roots[2] + roots[3]);
-  }
 
+    long double t = (*Fns[0])(roots[0]);
+    long double ratio = log(m*t/M) - log(vcur[m]);
+    if (ratio < mingen[j1][j2][j3][j4])
+      mingen[j1][j2][j3][j4] = ratio;
+    
+  }
   maxdiff1[j1][j2][j3][j4] = mxd;
   maxjumpval[j1][j2][j3][j4] = mxj;
   mintail[j1][j2][j3][j4] =  mnt;
 }
 
-
 int main(){
-
-  //  long double Blow=0.749, Bhigh=0.751, step=0.001;
-
   cout.precision(5);
   
   binomcoef = new int[types+1];
@@ -91,6 +92,7 @@ int main(){
 
   // for calculating v_1 from innerfn()
   Func_ini f(1);
+  // Adjustments for the bottom and top end of the range
   for(int m=minC;m<=maxC;m++){
     vcur[m]=f.innerfn(m/M - 1.0/N);
     //    cout << m << " : " << vcur[m] << endl;
@@ -108,25 +110,6 @@ int main(){
     vcur[m] *= g;
   }
 
-  // for reading v_{previous} from a file
-  // ifstream file("v1_1_19999.txt");
-  // for(int m=1;m<=maxC;m++){
-  //   //  cout << m << endl;
-  //   file >> vcur[m];
-  //  }
-  // file.close();
-  // long double scale=vcur[4000]; // 4000 = (maxC+1)/5
-  // for(int m=1;m<=maxC;m++)
-  //   vcur[m] /= scale;
-  
-  
-  // int j1=2,j2=3, j3=9, j4=9;
-  // cout << j1 << " " << j2 << " " << j3 << " " << j4 << endl;
-  // generic_thread(j1,j2,j3,j4);
-  // cout << endl << "MIN , MAX = ";
-  // cout <<  mingen[j1][j2][j3][j4] << " , " << maxgen[j1][j2][j3][j4] << endl;
-
-    
   thread *myth[jconfigs];
   int t_i = 0;
   for(int j1=1;j1<=types;j1++){
@@ -154,9 +137,8 @@ int main(){
     }
   }
 
-
   long double mxd=0.0L, mxj=0.0L, mnt=1.0L;
-  
+  long double sum = 0.0L;
   for(int j1=1;j1<=types;j1++){
     for(int j2=j1;j2<=types;j2++){
       for(int j3=j2;j3<=types;j3++){
@@ -164,57 +146,22 @@ int main(){
 	  mxd = max(mxd,maxdiff1[j1][j2][j3][j4]);
 	  mxj = max(mxj,maxjumpval[j1][j2][j3][j4]);
 	  mnt = min(mnt,mintail[j1][j2][j3][j4]);
-	  
-	}
-      }
-    }
-  }
-
-  cout << "The maximum difference |q_k - q_l| for j_k=j_l+1: " << mxd << endl;
-  cout << "The maximum q_k for j_k>j_l: " << mxj << endl;
-  cout << "The minimum value of p+q_3+q_4 for j_2>j_1>1: " << mnt << endl;
-  
- /*
-  long double sum = 0.0L;
-  for(int j1=1;j1<=types;j1++){
-    for(int j2=j1;j2<=types;j2++){
-      for(int j3=j2;j3<=types;j3++){
-	for(int j4=j3;j4<=types;j4++){
 
 	  long double p = probfn(j1,j2,j3,j4,r);
 	  long double w = mingen[j1][j2][j3][j4];
 	  sum += w*p*noperm(j1,j2,j3,j4);
-  
 	}
       }
     }
   }
 
+  cout << endl << "Proof of Lemma 5." << endl;
+  cout << "The maximum difference |q_k - q_l| for j_k=j_l+1: " << mxd << endl;
+  cout << "The maximum q_k for j_k>j_l: " << mxj << endl;
+  cout << "The minimum value of p+q_3+q_4 for j_2>j_1>1: " << mnt << endl << endl;
+  
   sum /= r;
-
-
-  cout << endl << "The expectation of the ratios: " << sum << endl;
-  */
+  cout << "Proof of Lemma 7." << endl;
+  cout << "The expectation of the ratios: " << sum << endl;
 }  
 
-/*
-
-  
-  cout << endl;
-  for(int m=minC;m<=maxC;m++){
-    cout << "v_1(" << m << ") = " << vcur[m] << "     ";
-    cout << "v_2(" << m << ") = " << vnext[m] << "     ";
-    cout << "v_2/v_1 = " << vnext[m]/vcur[m] << endl;
-  }
-
-  ofstream outfile("v6_1_19999.txt");
-  for(int m=1;m<=maxC;m++){
-    outfile <<  vnext[m] << endl;
-  }
-  outfile.close();
-  
-  return 0;    
-}
-
-
-*/
