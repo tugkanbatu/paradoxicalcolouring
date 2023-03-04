@@ -33,7 +33,6 @@ int factorial(int n){
   return f;
 }
 
-
 // calculates no. of different permutations of j1,j2,j2,j4
 // 1 <= j1 <= j2 <= j3 <= j4 <= maxtypes
 int noperm(int j1, int j2, int j3, int j4){
@@ -65,12 +64,9 @@ int *binomcoef;
 
 void calcbinomcoef(const int n)
 {
-  
   binomcoef[0]=1;
-  //  cout << binomcoef[0] << " ";
   for(int i=1;i<=n;i++){
     binomcoef[i] = binomcoef[i-1] * (n-i+1) / i;
-    //    cout << binomcoef[i] << " ";
   }
 }
   
