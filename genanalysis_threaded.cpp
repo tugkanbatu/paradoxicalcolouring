@@ -88,7 +88,7 @@ int main(){
   calcbinomcoef(types);
 
   r=rSolver(N,0.0,0.9,1.0,accuracy); // r should be very close 1
-  cout << "The value of r: " << r << endl;
+  cout << "The value of \\hat{q} from Lemma 2: " << r << endl;
 
   // for calculating v_1 from innerfn()
   Func_ini f(1);
