@@ -1,15 +1,9 @@
 // Implementation of w
 
 long double wseries[4];
+long double wvec[maxC+1];
 
-// coefficient array for truncated series in w
-void wsetup(){
-  wseries[0] = 1.0L;
-  wseries[1] = 5.0L/3072.0L;
-  wseries[2] = 100.0L/17.0L/9.0L/1024.0L/1024.0L;
-  wseries[3] = 125.0L/1024.0L/1024.0L/1024.0L/4096.0L;
-}
-
+// Function w
 long double w(long double x){
   long double xshifted = x - 0.2L;
   long double result=wseries[3];
@@ -21,7 +15,7 @@ long double w(long double x){
   result /= (1-5.0L*xshifted/4.0L) * (1-5.0L*xshifted/64.0L) * (1-5.0L*xshifted/1024.0L);
 
   // Adjustments for the bottom and top end of the range x in (0,1)
-  long double g; // adjustment factor
+  long double g = 0.0L; // adjustment factor
   if (x<0.2L){
     g = 0.2L - x;
     g *= -(20.0L/27.0L)*g*g;
@@ -35,48 +29,41 @@ long double w(long double x){
   return result;
 }
 
+// coefficient array for truncated series in w is initialised
+// wvec is populated with w() values for discretised points in (0,1)
+void wsetup(){
+  wseries[0] = 1.0L;
+  wseries[1] = 5.0L/3072.0L;
+  wseries[2] = 100.0L/17.0L/9.0L/1024.0L/1024.0L;
+  wseries[3] = 125.0L/1024.0L/1024.0L/1024.0L/4096.0L;
+
+  for(int m=minC;m<=maxC;m++)
+    wvec[m] = w(m/M);
+}
 
 
-
-/////////////////////////////////////////////////////////////////
-
-
-
+// Implementation of the w((1-x)/k)/x
 class Func{
 public:
-  virtual long double operator()(long double x)=0;
-  long double k;
-  virtual long double innerfn(long double x)=0;
-};
-
-class Func_iter:public Func{
-public:
-  Func_iter(long double key, long double *vec);
+  Func(int k);
   long double operator()(long double x);
-  long double innerfn(long double x);
   
 private:
-  long double *v;
+  int k;
 };
 
-
-
-Func_iter::Func_iter(long double key, long double *vec){
+Func::Func(int key){
   k=key;
-  v=vec;
 }
   
-long double Func_iter::innerfn(long double x){
-  static int minindex=maxC+1,maxindex=0;
-  if (x>=1)
-    return 1e+10;
-  int i = (int) floor( M * x);
-  return v[i];
+long double Func::operator()(long double x){
+  long double xshifted=(1.0L-x)/k;
+  if (xshifted>=1.0)
+    cout << "x>=1 !!!" << endl;
+  int i = (int) floor( M * xshifted);
+  return wvec[i]/x;
 }
 
-long double Func_iter::operator()(long double x){
-  return innerfn((1.0-x) / k) / x;
-}
  
 
 

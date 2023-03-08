@@ -18,8 +18,6 @@ const int maxC=19999;
 const long double M = (long double) maxC+1;
 const int minC=1;
 
-long double vcur[maxC+1];
-
 long double r;
 
 long double maxdiff1[types+1][types+1][types+1][types+1];
@@ -34,10 +32,10 @@ void generic_thread(int j1, int j2, int j3, int j4){
 
   Func* Fns[NoFns];
   long double roots[NoFns];
-  Fns[0] = new Func_iter(j1,vcur);
-  Fns[1] = new Func_iter(j2,vcur);
-  Fns[2] = new Func_iter(j3,vcur);
-  Fns[3] = new Func_iter(j4,vcur);
+  Fns[0] = new Func(j1);
+  Fns[1] = new Func(j2);
+  Fns[2] = new Func(j3);
+  Fns[3] = new Func(j4);
 
   long double mxd=0.0L, mxj=0.0, mnt=1.0L;
   mingen[j1][j2][j3][j4]=ub;
@@ -69,7 +67,7 @@ void generic_thread(int j1, int j2, int j3, int j4){
       mnt = min(mnt, (m/M) + roots[2] + roots[3]);
 
     long double t = (*Fns[0])(roots[0]);
-    long double ratio = log(m*t/M) - log(vcur[m]);
+    long double ratio = log(m*t/M) - log(wvec[m]);
     if (ratio < mingen[j1][j2][j3][j4])
       mingen[j1][j2][j3][j4] = ratio;
     
@@ -88,11 +86,6 @@ int main(){
 
   r=rSolver(N,0.0,0.9,1.0,accuracy); // r should be very close 1
   cout << "The value of \\hat{q} from Lemma 2: " << r << endl;
-
-
-  for(int m=minC;m<=maxC;m++){
-    vcur[m] = w(m/M);
-  }
 
   thread *myth[jconfigs];
   int t_i = 0;
