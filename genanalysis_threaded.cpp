@@ -2,7 +2,6 @@
 // g++ genanalysis_threaded.cpp -o genericanalysis -pthread -std=c++11
 
 #include<iostream>
-#include<fstream>
 #include<cmath>
 #include<thread>
 
@@ -20,7 +19,6 @@ const long double M = (long double) maxC+1;
 const int minC=1;
 
 long double vcur[maxC+1];
-// long double vnext[maxC+1];
 
 long double r;
 
@@ -29,8 +27,8 @@ long double maxjumpval[types+1][types+1][types+1][types+1];
 long double mintail[types+1][types+1][types+1][types+1];
 long double mingen[types+1][types+1][types+1][types+1];
 
-#include "Func1.cpp"
-#include "helpers1.cpp"
+#include "func.cpp"
+#include "helpers.cpp"
 
 void generic_thread(int j1, int j2, int j3, int j4){
 
@@ -82,32 +80,18 @@ void generic_thread(int j1, int j2, int j3, int j4){
 }
 
 int main(){
-  cout.precision(5);
+  cout.precision(7);
   
   binomcoef = new int[types+1];
   calcbinomcoef(types);
+  wsetup();
 
   r=rSolver(N,0.0,0.9,1.0,accuracy); // r should be very close 1
   cout << "The value of \\hat{q} from Lemma 2: " << r << endl;
 
-  // for calculating v_1 from innerfn()
-  Func_ini f(1);
-  // Adjustments for the bottom and top end of the range
+
   for(int m=minC;m<=maxC;m++){
-    vcur[m]=f.innerfn(m/M - 1.0/N);
-    //    cout << m << " : " << vcur[m] << endl;
-    long double g = 1.0;
-    if (m<4000){
-      g = (m/M - 0.2);
-      g *= (20.0/27.0)*g*g;
-      g = exp(g);
-    }
-    if (m>10000){
-      g = (m/M - 0.5);
-      g *= -0.25*g*g;
-      g = exp(g);
-    }
-    vcur[m] *= g;
+    vcur[m] = w(m/M);
   }
 
   thread *myth[jconfigs];
